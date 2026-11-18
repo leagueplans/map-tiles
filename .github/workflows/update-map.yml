@@ -1,0 +1,103 @@
+name: Update the map
+
+# Renders the map from the game's newest cache, with the renderer in the League Plans repository,
+# and opens a pull request with whatever changed, a report of it, and a link to an overview image
+# of where it changed. Merging the pull request publishes the tiles. A run whose render matches
+# what's published opens no pull request.
+#
+# Every run renders, which takes about 20 minutes, so there's nothing to force: running it by hand
+# renders the newest cache now, such as after a change to the renderer.
+on:
+  # Thursday mornings: the game updates on Wednesdays, and the archive has the new cache within
+  # hours
+  schedule:
+    - cron: "0 6 * * 4"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-map
+
+jobs:
+  update:
+    # https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        path: map-tiles
+
+    # Only what the renderer is built from, rather than the whole site with its images
+    - uses: actions/checkout@v7
+      with:
+        repository: leagueplans/leagueplans.github.io
+        path: planner
+        sparse-checkout: |
+          project
+          codec
+          common
+          maprender
+
+    - uses: coursier/cache-action@v8
+      with:
+        root: planner
+
+    - uses: actions/setup-java@v6
+      with:
+        distribution: temurin
+        java-version: 17
+
+    - uses: sbt/setup-sbt@v1
+      with:
+        sbt-runner-version: 1.13.0
+
+    # Logs its progress every 15 seconds. Writes report.md and, if any tiles changed, overview.png
+    # to the results directory. The runner's paths have no spaces, which sbt's run would split
+    # arguments at.
+    - name: Render the map
+      working-directory: planner
+      run: >-
+        sbt "mapRenderer/run --latest ${{ runner.temp }}/cache
+        ${{ github.workspace }}/map-tiles/docs ${{ runner.temp }}/results"
+
+    # Unzipped, so that it opens in the browser from the link in the pull request
+    - name: Upload the overview
+      id: overview
+      uses: actions/upload-artifact@v7
+      with:
+        path: ${{ runner.temp }}/results/overview.png
+        archive: false
+        if-no-files-found: ignore
+
+    - name: Write the report
+      id: report
+      env:
+        OVERVIEW: ${{ steps.overview.outputs.artifact-url }}
+      run: |
+        report="$RUNNER_TEMP/body.md"
+        if [ -n "$OVERVIEW" ]; then
+          printf '**[Overview of the changes](%s)**\n\n' "$OVERVIEW" > "$report"
+        fi
+        cat "$RUNNER_TEMP/results/report.md" >> "$report"
+        cat "$report" >> "$GITHUB_STEP_SUMMARY"
+        delimiter="$(openssl rand -hex 8)"
+        { echo "report<<$delimiter"; cat "$report"; echo "$delimiter"; } >> "$GITHUB_OUTPUT"
+
+    - name: Open a pull request for any changes
+      uses: peter-evans/create-pull-request@v8
+      with:
+        path: map-tiles
+        commit-message: Update the map
+        branch: update-map
+        delete-branch: true
+        title: Update the map
+        body: |
+          Rendered by workflow [#${{ github.run_number }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}). Check the changes in the overview before merging.
+
+          ---
+
+          ${{ steps.report.outputs.report }}

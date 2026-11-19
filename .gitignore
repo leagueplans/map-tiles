@@ -1,0 +1,6 @@
+# IntelliJ
+.idea/
+*.iml
+
+# The renderer's staging folder, beside docs/, left behind if a render is killed
+.maprender-*/

@@ -1,6 +1,6 @@
 # Map tiles for leagueplans
 
-Map imagery for the map on [leagueplans](https://www.leagueplans.com), served from this repository's `docs/` folder by GitHub Pages at `https://www.leagueplans.com/map-tiles/`.
+Map imagery for the map on [leagueplans](https://www.leagueplans.com), served from this repository's `docs/` folder by GitHub Pages at `https://map.leagueplans.com/`. The subdomain is the map's own, so that nothing published here could run as the app.
 
 The tiles are rendered from the Old School RuneScape game cache, as archived by [OpenRS2](https://archive.openrs2.org), using RuneLite's [cache library](https://github.com/runelite/runelite/tree/master/cache).
 
@@ -18,7 +18,7 @@ The [Update the map](.github/workflows/update-map.yml) workflow runs every Thurs
 
 The report links to an overview: the whole map with the regions that changed highlighted, saved with the workflow run. Tile sets should be validated before merging, as it is possible for an incompatible cache library to produce partial tile sets from a cache. The [renderer's README](https://github.com/leagueplans/leagueplans.github.io/blob/master/maprender/README.md#the-cache-library) has recommendations for how to handle this scenario.
 
-The render runs third-party code on a cache from a third party's archive, so it has no write access to the repository. A second job checks that the render holds only tiles, `index.json`, `places.json`, `.nojekyll` and `CNAME` before opening the pull request, since anything else in `docs/` would be served from the same site as the app. Files added to `docs/` by hand get no such check.
+The render runs third-party code on a cache from a third party's archive, so it has no write access to the repository. A second job checks that the render holds only tiles, `index.json`, `places.json`, `.nojekyll` and `CNAME` before opening the pull request, so that nothing else is ever published under the site's domain. Files added to `docs/` by hand get no such check.
 
 ## Attribution
 

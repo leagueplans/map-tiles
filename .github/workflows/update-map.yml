@@ -139,8 +139,8 @@ jobs:
         name: report
         path: ${{ runner.temp }}/report
 
-    # GitHub Pages serves docs on the same origin as the app, so a page or script published here
-    # would run as the app. Only tiles and the map's own files are let through.
+    # Only tiles and the map's own files are let through, so that nothing else, such as a page or a
+    # script, is ever published under the site's domain
     - name: Check the render
       working-directory: ${{ runner.temp }}/docs
       run: |

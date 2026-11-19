@@ -18,6 +18,8 @@ The [Update the map](.github/workflows/update-map.yml) workflow runs every Thurs
 
 The report links to an overview: the whole map with the regions that changed highlighted, saved with the workflow run. Tile sets should be validated before merging, as it is possible for an incompatible cache library to produce partial tile sets from a cache. The [renderer's README](https://github.com/leagueplans/leagueplans.github.io/blob/master/maprender/README.md#the-cache-library) has recommendations for how to handle this scenario.
 
+The render runs third-party code on a cache from a third party's archive, so it has no write access to the repository. A second job checks that the render holds only tiles, `index.json`, `places.json`, `.nojekyll` and `CNAME` before opening the pull request, since anything else in `docs/` would be served from the same site as the app. Files added to `docs/` by hand get no such check.
+
 ## Attribution
 
 Created using intellectual property belonging to Jagex Limited under the terms of Jagex's [Fan Content Policy](https://legal.jagex.com/docs/policies/fan-content-policy). This content is not endorsed by or affiliated with Jagex.
